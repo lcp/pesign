@@ -596,7 +596,7 @@ find_named_certificate(cms_context *cms, char *name, CERTCertificate **cert)
 		if (!strcmp(node->cert->subjectName, name))
 			break;
 	}
-	if (!node) {
+	if (CERT_LIST_END(node,certlist)) {
 		PK11_DestroySlotListElement(slots, &psle);
 		PK11_FreeSlotList(slots);
 		CERT_DestroyCertList(certlist);

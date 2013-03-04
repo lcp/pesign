@@ -96,12 +96,7 @@ generate_certificate_list(cms_context *cms, SECItem ***certificate_list_p)
 		CERTCertificate *signer = NULL;
 		int rc = find_named_certificate(cms, cms->cert->issuerName,
 						&signer);
-		if (rc < 0) {
-			PORT_ArenaRelease(cms->arena, mark);
-			return -1;
-		}
-
-		if (signer) {
+		if (rc == 0 && signer) {
 			if (signer->derCert.len != cms->cert->derCert.len ||
 					memcmp(signer->derCert.data,
 						cms->cert->derCert.data,

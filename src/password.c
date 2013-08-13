@@ -76,7 +76,8 @@ static char *SEC_GetPassword(FILE *input, FILE *output, char *prompt,
 	    echoOff(infd);
 	}
 
-	fgets ( phrase, sizeof(phrase), input);
+	if (fgets(phrase, sizeof(phrase), input) == NULL)
+		phrase[0] = '\0';
 
 	if (isTTY) {
 	    fprintf(output, "\n");

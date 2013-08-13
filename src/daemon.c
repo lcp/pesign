@@ -432,7 +432,11 @@ malformed:
 		if (rc < 0) {
 err_attached:
 			pe_end(outpe);
-			ftruncate(outfd, 0);
+			if (ftruncate(outfd, 0) != 0) {
+				ctx->cms->log(ctx->cms, ctx->priority|LOG_ERR,
+					"pesignd: could not truncate output "
+					"file: %m");
+			}
 			goto finish;
 		}
 		ssize_t sigspace = calculate_signature_space(ctx->cms, outpe);
@@ -450,21 +454,34 @@ err_attached:
 				ctx->cms->num_signatures, outpe);
 		pe_end(outpe);
 	} else {
-		ftruncate(outfd, 0);
+		if (ftruncate(outfd, 0) != 0) {
+			ctx->cms->log(ctx->cms, ctx->priority|LOG_ERR,
+				"pesignd: could not truncate output "
+				"file: %m");
+		}
 		rc = generate_digest(ctx->cms, inpe, 1);
 		if (rc < 0) {
 err_detached:
-			ftruncate(outfd, 0);
+			if (ftruncate(outfd, 0) != 0) {
+				ctx->cms->log(ctx->cms, ctx->priority|LOG_ERR,
+					"pesignd: could not truncate output "
+					"file: %m");
+			}
 			goto finish;
 		}
 		rc = generate_signature(ctx->cms);
 		if (rc < 0)
 			goto err_detached;
 		rc = export_signature(ctx->cms, outfd, 0);
-		if (rc >= 0)
-			ftruncate(outfd, rc);
-		else if (rc < 0)
+		if (rc >= 0) {
+			if (ftruncate(outfd, rc) != 0) {
+				ctx->cms->log(ctx->cms, ctx->priority|LOG_ERR,
+					"pesignd: could not truncate output "
+					"file: %m");
+			}
+		} else if (rc < 0) {
 			goto err_detached;
+		}
 	}
 
 finish:
@@ -999,7 +1016,12 @@ daemonize(cms_context *cms_ctx, char *certdir, int do_fork)
 		exit(1);
 	}
 
-	chdir(homedir ? homedir : "/");
+	if (chdir(homedir ? homedir : "/") != 0) {
+		ctx.backup_cms->log(ctx.backup_cms, ctx.priority|LOG_ERR,
+			"pesignd: could not change working directory "
+			"for pesign: %m");
+		exit(1);
+	}
 
 	if (getuid() == 0) {
 		/* process is running as root, drop privileges */

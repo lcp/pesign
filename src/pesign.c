@@ -164,9 +164,15 @@ open_output(pesign_context *ctx)
 
 	addr = pe_rawfile(ctx->inpe, &size);
 
-	ftruncate(ctx->outfd, size);
+	if (ftruncate(ctx->outfd, size) != 0) {
+		fprintf(stderr, "pesign: could not truncate output file: %m\n");
+		exit(1);
+	}
 	lseek(ctx->outfd, 0, SEEK_SET);
-	write(ctx->outfd, addr, size);
+	if (write(ctx->outfd, addr, size) != size) {
+		fprintf(stderr, "pesign: could not write output file: %m\n");
+		exit(1);
+	}
 
 	Pe_Cmd cmd = ctx->outfd == STDOUT_FILENO ? PE_C_RDWR : PE_C_RDWR_MMAP;
 	ctx->outpe = pe_begin(ctx->outfd, cmd, NULL);

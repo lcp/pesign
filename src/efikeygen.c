@@ -330,10 +330,11 @@ populate_extensions(cms_context *cms, CERTCertificate *cert,
 {
 	CERTAttribute *attr = NULL;
 	SECOidData *oid;
+	int i;
 
 	oid = SECOID_FindOIDByTag(SEC_OID_PKCS9_EXTENSION_REQUEST);
 
-	for (int i; crq->attributes[i]; i++) {
+	for (i = 0; crq->attributes[i]; i++) {
 		attr = crq->attributes[i];
 		if (attr->attrType.len != oid->oid.len)
 			continue;

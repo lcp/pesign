@@ -626,6 +626,7 @@ main(int argc, char *argv[])
 		 */
 		case IMPORT_RAW_SIGNATURE|IMPORT_SATTRS:
 			check_inputs(ctxp);
+			ctxp->cms_ctx->privkey_unneeded = 1;
 			rc = find_certificate(ctxp->cms_ctx, 0);
 			if (rc < 0) {
 				fprintf(stderr, "pesign: Could not find "

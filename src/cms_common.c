@@ -272,6 +272,7 @@ struct cbdata {
 	CERTCertificate *cert;
 	PK11SlotListElement *psle;
 	secuPWData *pwdata;
+	int privkey_unneeded;
 };
 
 static SECStatus
@@ -283,6 +284,12 @@ is_valid_cert(CERTCertificate *cert, void *data)
 	void *pwdata = cbdata->pwdata;
 
 	SECKEYPrivateKey *privkey = NULL;
+
+	if (cbdata->privkey_unneeded) {
+		cbdata->cert = cert;
+		return SECSuccess;
+	}
+
 	privkey = PK11_FindPrivateKeyFromCert(slot, cert, pwdata);
 	if (privkey != NULL) {
 		cbdata->cert = cert;
@@ -413,7 +420,7 @@ find_certificate(cms_context *cms, int needs_private_key)
 	}
 
 	SECStatus status;
-	if (PK11_NeedLogin(psle->slot) && !PK11_IsLoggedIn(psle->slot, pwdata)) {
+	if (!cms->privkey_unneeded && PK11_NeedLogin(psle->slot) && !PK11_IsLoggedIn(psle->slot, pwdata)) {
 		status = PK11_Authenticate(psle->slot, PR_TRUE, pwdata);
 		if (status != SECSuccess) {
 			PK11_DestroySlotListElement(slots, &psle);
@@ -442,6 +449,7 @@ find_certificate(cms_context *cms, int needs_private_key)
 		.cert = NULL,
 		.psle = psle,
 		.pwdata = pwdata,
+		.privkey_unneeded = cms->privkey_unneeded,
 	};
 
 	if (needs_private_key) {
@@ -562,7 +570,7 @@ find_named_certificate(cms_context *cms, char *name, CERTCertificate **cert)
 	}
 
 	SECStatus status;
-	if (PK11_NeedLogin(psle->slot) && !PK11_IsLoggedIn(psle->slot, pwdata)) {
+	if (!cms->privkey_unneeded && PK11_NeedLogin(psle->slot) && !PK11_IsLoggedIn(psle->slot, pwdata)) {
 		status = PK11_Authenticate(psle->slot, PR_TRUE, pwdata);
 		if (status != SECSuccess) {
 			PK11_DestroySlotListElement(slots, &psle);

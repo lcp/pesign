@@ -9,6 +9,7 @@ STATIC_LIBS = $(TOPDIR)/libdpe/libdpe.a
 LDFLAGS =
 CCLDFLAGS = -L../libdpe $(foreach pklib,$(PKLIBS), $(shell pkg-config --libs-only-L $(pklib)))
 CFLAGS += -I../include/ $(foreach pklib,$(PKLIBS), $(shell pkg-config --cflags $(pklib))) -Werror
+UNITDIR = /lib/systemd/system
 
 TARGETS = pesign authvar client efisiglist efikeygen
 
@@ -70,12 +71,12 @@ clean : depclean
 install_systemd:
 	$(INSTALL) -d -m 755 $(INSTALLROOT)/usr/lib/tmpfiles.d/
 	$(INSTALL) -m 644 tmpfiles.conf $(INSTALLROOT)/usr/lib/tmpfiles.d/pesign.conf
-	$(INSTALL) -d -m 755 $(INSTALLROOT)/usr/lib/systemd/system/
-	$(INSTALL) -m 644 pesign.service $(INSTALLROOT)/usr/lib/systemd/system/
+	$(INSTALL) -d -m 755 $(INSTALLROOT)/$(UNITDIR)
+	$(INSTALL) -m 644 pesign.service $(INSTALLROOT)/$(UNITDIR)
 
 install_sysvinit:
-	$(INSTALL) -d -m 755 $(INSTALLROOT)/etc/rc.d/init.d/
-	$(INSTALL) -m 755 pesign.sysvinit $(INSTALLROOT)/etc/rc.d/init.d/pesign
+	$(INSTALL) -d -m 755 $(INSTALLROOT)/etc/init.d/
+	$(INSTALL) -m 755 pesign.sysvinit $(INSTALLROOT)/etc/init.d/pesign
 
 install :
 	$(INSTALL) -d -m 700 $(INSTALLROOT)/etc/pki/pesign/

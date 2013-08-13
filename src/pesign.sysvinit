@@ -6,21 +6,25 @@
 # processname: /usr/bin/pesign
 # pidfile: /var/run/pesign.pid
 ### BEGIN INIT INFO 
-# Provides: pesign
-# Default-Start:
+# Provides:          pesign
+# Should-Start:      $remote_fs
+# Should-Stop:       $remote_fs
+# Required-Start:
+# Required-Stop:
+# Default-Start:     2 3 5
 # Default-Stop:
 # Short-Description: The pesign PE signing daemon
 # Description: The pesign PE signing daemon
 ### END INIT INFO
 
-. /etc/init.d/functions
 [ -f /usr/bin/pesign ] || exit 1
 
+PESIGN_PIDFILE=/var/run/pesign.pid
 RETVAL=0
 
 start(){
     echo -n "Starting pesign: "
-    daemon /usr/bin/pesign --daemonize
+    startproc -f -p "$PESIGN_PIDFILE" /usr/bin/pesign --daemonize
     RETVAL=$?
     echo
     touch /var/lock/subsys/pesign

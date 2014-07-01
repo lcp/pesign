@@ -18,6 +18,7 @@
  */
 
 #include <unistd.h>
+#include <stddef.h>
 #include <sys/mman.h>
 
 #include <prerror.h>
@@ -133,11 +134,7 @@ generate_descriptor(authvar_context *ctx)
 	if (rc < 0)
 		cmsreterr(-1, ctx->cms_ctx, "could not create signed data");
 
-#if __WORDSIZE == 64
-	offset = (uint64_t) &((win_cert_uefi_guid_t *)0)->data;
-#else
-	offset = (uint32_t) &((win_cert_uefi_guid_t *)0)->data;
-#endif
+	offset = offsetof(win_cert_uefi_guid_t, data);
 	authinfo = calloc(offset + sd_der.len, 1);
 	if (!authinfo)
 		cmsreterr(-1, ctx->cms_ctx, "could not allocate authinfo");
@@ -160,6 +157,7 @@ write_authvar(authvar_context *ctx)
 	void *buffer, *ptr;
 	size_t buf_len, des_len, remain;
 	ssize_t wlen;
+	off_t offset;
 
 	if (!ctx->authinfo)
 		cmsreterr(-1, ctx->cms_ctx, "Not a valid authvar");
@@ -187,17 +185,17 @@ write_authvar(authvar_context *ctx)
 	if (ctx->value_size > 0)
 		memcpy(ptr, ctx->value, ctx->value_size);
 
-	if (!ctx->to_firmware) {
-		ftruncate(ctx->exportfd, buf_len);
+	if (!ctx->to_firmware)
 		lseek(ctx->exportfd, 0, SEEK_SET);
-	}
 
 	remain = buf_len;
+	offset = 0;
 	do {
-		wlen = write(ctx->exportfd, buffer, remain);
+		wlen = write(ctx->exportfd, buffer + offset, remain);
 		if (wlen < 0)
 			cmsreterr(-1, ctx->cms_ctx, "failed to write authvar");
 		remain -= wlen;
+		offset += wlen;
 	} while (remain > 0);
 
 	return 0;
